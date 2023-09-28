@@ -1,20 +1,14 @@
-'use client'
-
-
-// ContactForm.js
+"use client";
 import React, { useState } from "react";
 import { database } from "./firebaseConfig";
-import { ref, push, set, get, child } from "firebase/database";
+import { ref, push, set, get } from "firebase/database";
 import styles from "./styles.module.css";
-
 
 export default function ContactForm() {
   const [messageSent, setMessageSent] = useState(false);
   const [currentNumber, setCurrentNumber] = useState(123);
 
   const currentDate = new Date().toISOString().split("T")[0];
-
-  // ...
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -37,20 +31,31 @@ export default function ContactForm() {
       return;
     }
 
-    // Check if email already exists
+    // Check if email or phone number already exists for today
     const contactFormRef = ref(database, "contactForm");
     const snapshot = await get(contactFormRef);
 
     if (snapshot.exists()) {
       const data = snapshot.val();
 
-      // Iterate through the data and check if the email already exists
-      const emailExists = Object.values(data).some(
-        (entry) => entry.emailid === emailid
+      // Check if email exists for today
+      const emailExistsToday = Object.values(data).some(
+        (entry) => entry.emailid === emailid && entry.date === currentDate
       );
 
-      if (emailExists) {
-        alert("Email address already exists in the database");
+      if (emailExistsToday) {
+        alert("Email address already exists for today");
+        return;
+      }
+
+      // Check if phone number exists for today
+      const phoneNumberExistsToday = Object.values(data).some(
+        (entry) =>
+          entry.phoneNumber === phoneNumber && entry.date === currentDate
+      );
+
+      if (phoneNumberExistsToday) {
+        alert("Phone number already exists for today");
         return;
       }
     }
@@ -76,8 +81,6 @@ export default function ContactForm() {
       console.error("Error querying the database: ", error);
     }
   };
-
-  // ...
 
   const validateEmail = (email) => {
     const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
