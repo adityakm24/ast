@@ -1,93 +1,71 @@
 'use client'
-// Import necessary dependencies
-import { useState } from "react";
-import { contactFormDB } from "./firebaseConfig";
+
+
+// ContactForm.js
+import React, { useState } from "react";
+import { database } from "./firebaseConfig";
+import { ref, push, set } from "firebase/database";
 import styles from "./styles.module.css";
 
 export default function ContactForm() {
-  // Define state variables
   const [messageSent, setMessageSent] = useState(false);
   const [currentNumber, setCurrentNumber] = useState(123);
 
-  // Handle form submission
+  const currentDate = new Date().toISOString().split("T")[0];
+
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    // Get form values
-    const name = e.target.elements.name.value;
-    const emailid = e.target.elements.emailid.value;
-    const msgContent = e.target.elements.msgContent.value;
+    const name = e.target.elements.name.value.trim();
+    const phoneNumber = e.target.elements.phoneNumber.value.trim();
+    const emailid = e.target.elements.emailid.value.trim();
+    const msgContent = e.target.elements.msgContent.value.trim();
 
-    // Function to validate email address
-    const validateEmail = (email) => {
-      const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-      return re.test(email);
-    };
-
-    // Function to validate phone number
-    const validatePhoneNumber = (phoneNumber) => {
-      const re = /^\d{10}$/;
-      return re.test(phoneNumber);
-    };
-
-    // Validate email and phone number
+    if (!name) {
+      alert("Name is required!");
+      return;
+    }
+    if (!validatePhoneNumber(phoneNumber)) {
+      alert("Invalid phone number");
+      return;
+    }
     if (!validateEmail(emailid)) {
       alert("Invalid email address");
       return;
     }
 
-    if (!validatePhoneNumber(name)) {
-      alert("Invalid phone number");
-      return;
-    }
-
-    // Generate a random number and start animation
     spinAnimation();
 
-    // Fetch data from the database
     try {
-      const snapshot = await contactFormDB
-        .orderByChild("date")
-        .equalTo(currentDate)
-        .once("value");
-
-      let shouldSave = true;
-
-      snapshot.forEach((childSnapshot) => {
-        const data = childSnapshot.val();
-        if (data.emailid === emailid) {
-          shouldSave = false;
-          return true;
-        }
+      const newContactFormRef = ref(database, "contactForm");
+      const newContactFormChildRef = push(newContactFormRef);
+      await set(newContactFormChildRef, {
+        name,
+        phoneNumber,
+        emailid,
+        msgContent,
+        discount: currentNumber,
+        date: currentDate,
       });
 
-      if (shouldSave) {
-        const newContactForm = contactFormDB.push();
-        await newContactForm.set({
-          name: name,
-          emailid: emailid,
-          msgContent: msgContent,
-          discount: currentNumber,
-          date: currentDate,
-        });
-
-        // Show success message
-        setMessageSent(true);
-        setTimeout(() => {
-          setMessageSent(false);
-        }, 3000);
-
-        // Reset the form
-        e.target.reset();
-      } else {
-        console.log("A record with the same emailid and date already exists.");
-      }
+      setMessageSent(true);
+      setTimeout(() => setMessageSent(false), 3000);
+      e.target.reset();
     } catch (error) {
-      console.log("Error querying the database: ", error);
+      console.error("Error querying the database: ", error);
     }
   };
 
-  // Function to generate a random number and start animation
+  const validateEmail = (email) => {
+    const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return re.test(email);
+  };
+
+  const validatePhoneNumber = (phoneNumber) => {
+    const re = /^\d{10}$/;
+    return re.test(phoneNumber);
+  };
+
   const spinAnimation = () => {
     const minNumber = 100;
     const maxNumber = 500;
@@ -99,20 +77,12 @@ export default function ContactForm() {
 
     setTimeout(() => {
       clearInterval(interval);
-      setMessageSent(true);
-      setTimeout(() => {
-        setMessageSent(false);
-      }, 3000);
     }, 3000);
   };
 
-  // Function to get a random number within a range
   const getRandomNumber = (min, max) => {
     return Math.floor(Math.random() * (max - min + 1)) + min;
   };
-
-  // Current date
-  const currentDate = new Date().toISOString().split("T")[0];
 
   return (
     <div className={styles.main}>
@@ -123,32 +93,45 @@ export default function ContactForm() {
         >
           Your message sent
         </div>
-        <h1 style={{ fontSize: "24px" }}>Your Lucky Discount:</h1>
-        <div
-          className={styles["random-number"]}
-          style={{ fontSize: "36px", fontWeight: "bold", margin: "20px 0" }}
-        >
-          {currentNumber}
-        </div>
+        <h1>Your Lucky Discount:</h1>
+        <div className={styles["random-number"]}>{currentNumber}</div>
       </div>
       <div className={styles.container}>
         <form onSubmit={handleSubmit} id="contactForm">
           <div className={styles.inputBox}>
-            <input type="text" id="name" placeholder="Your number...." />
+            <input
+              type="text"
+              id="name"
+              name="name"
+              placeholder="Your Name...."
+              required
+            />
           </div>
-
           <div className={styles.inputBox}>
-            <input type="email" id="emailid" placeholder="Your Email....." />
+            <input
+              type="text"
+              id="phoneNumber"
+              name="phoneNumber"
+              placeholder="Your Number...."
+              required
+            />
           </div>
-
+          <div className={styles.inputBox}>
+            <input
+              type="email"
+              id="emailid"
+              name="emailid"
+              placeholder="Your Email....."
+              required
+            />
+          </div>
           <div className={styles.inputBox} id={styles.drop}>
-            <select id="msgContent" placeholder="Message">
+            <select id="msgContent" name="msgContent" required>
               <option value="Salesman1">Salesman1</option>
               <option value="Salesman2">Salesman2</option>
               <option value="Salesman3">Salesman3</option>
             </select>
           </div>
-
           <div className={styles.inputBox}>
             <button type="submit">Submit</button>
           </div>
