@@ -4,14 +4,17 @@
 // ContactForm.js
 import React, { useState } from "react";
 import { database } from "./firebaseConfig";
-import { ref, push, set } from "firebase/database";
+import { ref, push, set, get, child } from "firebase/database";
 import styles from "./styles.module.css";
+
 
 export default function ContactForm() {
   const [messageSent, setMessageSent] = useState(false);
   const [currentNumber, setCurrentNumber] = useState(123);
 
   const currentDate = new Date().toISOString().split("T")[0];
+
+  // ...
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -32,6 +35,24 @@ export default function ContactForm() {
     if (!validateEmail(emailid)) {
       alert("Invalid email address");
       return;
+    }
+
+    // Check if email already exists
+    const contactFormRef = ref(database, "contactForm");
+    const snapshot = await get(contactFormRef);
+
+    if (snapshot.exists()) {
+      const data = snapshot.val();
+
+      // Iterate through the data and check if the email already exists
+      const emailExists = Object.values(data).some(
+        (entry) => entry.emailid === emailid
+      );
+
+      if (emailExists) {
+        alert("Email address already exists in the database");
+        return;
+      }
     }
 
     spinAnimation();
@@ -55,6 +76,8 @@ export default function ContactForm() {
       console.error("Error querying the database: ", error);
     }
   };
+
+  // ...
 
   const validateEmail = (email) => {
     const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
