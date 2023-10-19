@@ -1,6 +1,6 @@
 "use client";
 import React, { useState } from "react";
-import { database } from "./firebaseConfig";
+import { database } from "../firebaseConfig";
 import { ref, push, set, get } from "firebase/database";
 import styles from "./styles.module.css";
 
