@@ -1,5 +1,4 @@
 import { initializeApp } from "firebase/app";
-import { getAnalytics } from "firebase/analytics";
 import { getDatabase, ref, push, set } from "firebase/database";
 
 const firebaseConfig = {
