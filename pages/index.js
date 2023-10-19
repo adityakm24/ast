@@ -3,7 +3,6 @@ import React, { useState } from "react";
 import { database } from "./firebaseConfig";
 import { ref, push, set, get } from "firebase/database";
 import styles from "./styles.module.css";
-import Navbar from "./Navbar";
 
 export default function ContactForm() {
   const [messageSent, setMessageSent] = useState(false);
@@ -113,7 +112,6 @@ export default function ContactForm() {
 
   return (
     <div className={styles.main}>
-      <Navbar />
       <div className={styles.top}>
         <div
           className={styles.alert}
